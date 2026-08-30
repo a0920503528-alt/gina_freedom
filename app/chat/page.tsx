@@ -1,9 +1,14 @@
 'use client';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useState } from 'react';
 
 export default function ChatPage(){
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status } = useChat({
+  transport: new DefaultChatTransport({
+    api: '/api/chat',
+  }),
+});
   const [input,setInput]=useState('');
   return <main style={{maxWidth:760,margin:'40px auto',padding:'0 20px',fontFamily:'system-ui'}}>
     <a href="/" style={{textDecoration:'none'}}>← 回到朝向自由</a>
