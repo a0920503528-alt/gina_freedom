@@ -1,0 +1,16 @@
+【朝向自由｜最終上架包】
+
+這包已經把 app/layout.tsx、app/page.tsx、package.json、tsconfig.json 都放好了。
+
+請：
+1. 解壓縮這個 ZIP。
+2. 建立一個新的 GitHub Repository。
+3. 把「解壓縮後資料夾裡的全部內容」上傳到 Repository 根目錄。
+4. Vercel → Add New → Project → Import Git Repository。
+5. 選這個 Repository。
+6. Framework Preset 保持 Next.js。
+7. Build Command / Output Directory 保持預設。
+8. Deploy。
+
+不要把 ZIP 檔本身放進 GitHub。
+不要把 app 資料夾裡的檔案移到外面。
