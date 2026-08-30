@@ -1,24 +1,77 @@
 'use client';
 
-import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
 
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
 export default function ChatPage() {
-  const { messages, sendMessage, status } = useChat();
-
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!input.trim()) return;
-
-    sendMessage({
-      text: input,
-    });
+    const text = input.trim();
+    if (!text || loading) return;
 
     setInput('');
-  };
+
+    const userMessage: Message = {
+      role: 'user',
+      content: text,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            ...messages,
+            userMessage,
+          ].map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.text();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data,
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: '抱歉，AI 暫時無法回覆。',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main
@@ -29,18 +82,11 @@ export default function ChatPage() {
         fontFamily: 'system-ui',
       }}
     >
-      <a
-        href=" "
-        style={{
-          textDecoration: 'none',
-        }}
-      >
+      <a href=" " style={{ textDecoration: 'none' }}>
         ← 回到朝向自由
       </a >
 
-      <h1 style={{ marginTop: 30 }}>
-        🤖 跟我聊聊
-      </h1>
+      <h1 style={{ marginTop: 30 }}>🤖 跟我聊聊</h1>
 
       <p style={{ color: '#777' }}>
         把你現在的想法說出來，我陪你換一個角度看看。
@@ -61,15 +107,10 @@ export default function ChatPage() {
           </p >
         )}
 
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            style={{
-              margin: '18px 0',
-            }}
-          >
+        {messages.map((message, index) => (
+          <div key={index} style={{ margin: '18px 0' }}>
             <strong>
-              {m.role === 'user' ? '你' : '朝向自由 AI'}
+              {message.role === 'user' ? '你' : '朝向自由 AI'}
             </strong>
 
             <div
@@ -78,14 +119,16 @@ export default function ChatPage() {
                 marginTop: 6,
               }}
             >
-              {m.parts?.map((p, i) =>
-                p.type === 'text' ? (
-                  <span key={i}>{p.text}</span>
-                ) : null
-              )}
+              {message.content}
             </div>
           </div>
         ))}
+
+        {loading && (
+          <div style={{ margin: '18px 0', color: '#777' }}>
+            朝向自由 AI 正在思考……
+          </div>
+        )}
       </div>
 
       <form
@@ -99,7 +142,7 @@ export default function ChatPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="輸入你現在想聊的事…"
+          placeholder="輸入你現在想聊的事……"
           style={{
             flex: 1,
             padding: 14,
@@ -110,14 +153,14 @@ export default function ChatPage() {
 
         <button
           type="submit"
-          disabled={status === 'streaming'}
+          disabled={loading}
           style={{
             padding: '0 20px',
             borderRadius: 12,
             border: 0,
           }}
         >
-          送出
+          {loading ? '思考中' : '送出'}
         </button>
       </form>
     </main>
